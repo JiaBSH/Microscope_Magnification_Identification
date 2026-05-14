@@ -12,6 +12,11 @@ from .evaluation import (
     write_rows_csv,
 )
 from .pipeline import ScaleEstimationPipeline
+from .recognition import (
+    format_recognition_report,
+    recognize_all_images,
+    write_recognition_csv,
+)
 from .recommendation import (
     format_recommendation_report,
     recommend_windows,
@@ -97,6 +102,26 @@ def build_parser() -> argparse.ArgumentParser:
     visualize_parser.add_argument("--output-dir", type=Path, default=Path("artifacts/window_visualizations"), help="Directory for generated patch and preview images.")
     visualize_parser.add_argument("--display-size", type=int, default=768, help="Output patch visualization size in pixels.")
     visualize_parser.add_argument("--csv", type=Path, default=None, help="Optional summary CSV for generated visualization files.")
+
+    recognize_parser = subparsers.add_parser("recognize-all", help="Recognize all images under a root folder and export recommended windows.")
+    recognize_parser.add_argument("--input-root", type=Path, default=Path("data/images"), help="Root directory containing images to recognize.")
+    recognize_parser.add_argument("--labeled-root", type=Path, default=Path("data/images"), help="Root directory containing labeled magnification folders.")
+    recognize_parser.add_argument("--refer-root", type=Path, default=Path("data/images/refer"), help="Reference image directory used for window recommendation.")
+    recognize_parser.add_argument(
+        "--extractor",
+        default="dinov2_timm",
+        choices=["robust_handcrafted", "dinov2_timm"],
+        help="Feature extractor backend.",
+    )
+    recognize_parser.add_argument("--pca-components", type=int, default=64)
+    recognize_parser.add_argument("--knn-neighbors", type=int, default=5)
+    recognize_parser.add_argument("--cluster-count", type=int, default=6)
+    recognize_parser.add_argument("--resize-long-edge", type=int, default=1024)
+    recognize_parser.add_argument("--disable-multiview", action="store_true")
+    recognize_parser.add_argument("--align-to", type=int, default=32)
+    recognize_parser.add_argument("--proxy-stat", default="median", choices=["median", "p75", "max"])
+    recognize_parser.add_argument("--square-basis", default="long", choices=["short", "long"])
+    recognize_parser.add_argument("--csv", type=Path, required=True, help="Output CSV for per-image recognition results.")
 
     return parser
 
@@ -193,6 +218,29 @@ def main() -> None:
         if args.csv is not None:
             write_visualization_summary_csv(args.csv, rows)
             print(f"saved_csv={args.csv}")
+        return
+
+    if args.command == "recognize-all":
+        config = PipelineConfig(
+            resize_long_edge=args.resize_long_edge,
+            pca_components=args.pca_components,
+            knn_neighbors=args.knn_neighbors,
+            cluster_count=args.cluster_count,
+            extractor_name=args.extractor,
+            use_multiview_inference=not args.disable_multiview,
+        )
+        results = recognize_all_images(
+            input_root=args.input_root,
+            labeled_root=args.labeled_root,
+            refer_root=args.refer_root,
+            config=config,
+            align_to=args.align_to,
+            proxy_stat=args.proxy_stat,
+            square_basis=args.square_basis,
+        )
+        write_recognition_csv(args.csv, results["rows"])
+        print(format_recognition_report(results))
+        print(f"saved_csv={args.csv}")
         return
 
     raise SystemExit("Unsupported command")

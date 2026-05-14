@@ -65,3 +65,14 @@ python -u -m rate_identification.cli visualize-windows \
 	--output-dir artifacts/window_visualizations_median_long \
 	--display-size 1024 \
 	--csv artifacts/window_visualizations_median_long.csv
+
+# Recognize all images under data/images using the median refer field of view and long-side square basis
+python -u -m rate_identification.cli recognize-all \
+	--input-root data/images \
+	--labeled-root data/images \
+	--refer-root data/images/refer \
+	--extractor dinov2_timm \
+	--disable-multiview \
+	--proxy-stat median \
+	--square-basis long \
+	--csv artifacts/recognize_all_median_long.csv
