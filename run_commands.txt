@@ -1,0 +1,67 @@
+cd /hpcfs/fhome/sunxc/JiaBSH/Rate_Identification
+conda activate openmmlab2
+export PYTHONPATH=src
+mkdir -p artifacts
+
+# Baseline evaluation
+python -u -m rate_identification.cli evaluate data/images --disable-multiview --csv artifacts/eval_predictions.csv --confusion-csv artifacts/eval_confusion.csv | tee artifacts/eval.log
+
+# DINOv2 evaluation
+python -u -m rate_identification.cli evaluate data/images --extractor dinov2_timm --disable-multiview --csv artifacts/eval_predictions_dinov2.csv --confusion-csv artifacts/eval_confusion_dinov2.csv | tee artifacts/eval_dinov2.log
+
+# Recommend larger windows using the maximum refer field of view and long-side square basis
+python -u -m rate_identification.cli recommend-windows \
+	--labeled-root data/images \
+	--refer-root data/images/refer \
+	--extractor dinov2_timm \
+	--disable-multiview \
+	--proxy-stat max \
+	--square-basis long \
+	--csv artifacts/window_recommendations_max_long.csv \
+	--refer-csv artifacts/refer_summary_max_long.csv
+
+# Generate visualizations from the new max-long recommendations
+python -u -m rate_identification.cli visualize-windows \
+	--labeled-root data/images \
+	--recommendations-csv artifacts/window_recommendations_max_long.csv \
+	--output-dir artifacts/window_visualizations_max_long \
+	--display-size 1024 \
+	--csv artifacts/window_visualizations_max_long.csv
+
+# Recommend windows using the median refer field of view and short-side square basis
+python -u -m rate_identification.cli recommend-windows \
+	--labeled-root data/images \
+	--refer-root data/images/refer \
+	--extractor dinov2_timm \
+	--disable-multiview \
+	--proxy-stat median \
+	--square-basis short \
+	--csv artifacts/window_recommendations_median_short.csv \
+	--refer-csv artifacts/refer_summary_median_short.csv
+
+# Generate visualizations from the new median-short recommendations
+python -u -m rate_identification.cli visualize-windows \
+	--labeled-root data/images \
+	--recommendations-csv artifacts/window_recommendations_median_short.csv \
+	--output-dir artifacts/window_visualizations_median_short \
+	--display-size 1024 \
+	--csv artifacts/window_visualizations_median_short.csv
+
+# Recommend windows using the median refer field of view and long-side square basis
+python -u -m rate_identification.cli recommend-windows \
+	--labeled-root data/images \
+	--refer-root data/images/refer \
+	--extractor dinov2_timm \
+	--disable-multiview \
+	--proxy-stat median \
+	--square-basis long \
+	--csv artifacts/window_recommendations_median_long.csv \
+	--refer-csv artifacts/refer_summary_median_long.csv
+
+# Generate visualizations from the new median-long recommendations
+python -u -m rate_identification.cli visualize-windows \
+	--labeled-root data/images \
+	--recommendations-csv artifacts/window_recommendations_median_long.csv \
+	--output-dir artifacts/window_visualizations_median_long \
+	--display-size 1024 \
+	--csv artifacts/window_visualizations_median_long.csv
