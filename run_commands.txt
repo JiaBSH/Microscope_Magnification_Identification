@@ -76,3 +76,5 @@ python -u -m rate_identification.cli recognize-all \
 	--proxy-stat median \
 	--square-basis long \
 	--csv artifacts/recognize_all_median_long.csv
+
+test_github
