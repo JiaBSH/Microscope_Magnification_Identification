@@ -4,7 +4,6 @@
 #SBATCH -N 1
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
 #SBATCH --time=04:00:00
 #SBATCH --output=/data/home/scvi576/run/JiaBSH/mmdetection_para/outputs/dino_window_supplement/01_scale_ablation/logs/slurm_%j.out
 #SBATCH --error=/data/home/scvi576/run/JiaBSH/mmdetection_para/outputs/dino_window_supplement/01_scale_ablation/logs/slurm_%j.err
