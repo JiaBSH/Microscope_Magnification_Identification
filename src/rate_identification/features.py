@@ -63,6 +63,28 @@ class RobustHandcraftedExtractor(FeatureExtractor):
         return feature / norm if norm > 0 else feature
 
 
+class RawPixelExtractor(FeatureExtractor):
+    """Normalized grayscale thumbnail used as a direct-PCA baseline."""
+
+    name = "raw_pixels"
+
+    def __init__(self, resize_edge: int = 1024, thumbnail_size: int = 64) -> None:
+        self.resize_edge = resize_edge
+        self.thumbnail_size = thumbnail_size
+
+    def extract_image(self, image: Image.Image) -> np.ndarray:
+        image = resize_long_edge(image.convert("RGB"), self.resize_edge)
+        rgb = pil_to_array(image, (self.thumbnail_size, self.thumbnail_size)) / 255.0
+        gray = rgb.mean(axis=2)
+        centered = gray - float(gray.mean())
+        scale = float(centered.std())
+        if scale > 1e-8:
+            centered = centered / scale
+        feature = centered.reshape(-1).astype(np.float32)
+        norm = np.linalg.norm(feature)
+        return feature / norm if norm > 0 else feature
+
+
 class DinoV2TimmExtractor(FeatureExtractor):
     name = "dinov2_timm"
 
@@ -106,6 +128,8 @@ class DinoV2TimmExtractor(FeatureExtractor):
 
 
 def build_extractor(name: str, resize_edge: int) -> FeatureExtractor:
+    if name == RawPixelExtractor.name:
+        return RawPixelExtractor(resize_edge=resize_edge)
     if name == RobustHandcraftedExtractor.name:
         return RobustHandcraftedExtractor(resize_edge=resize_edge)
     if name == DinoV2TimmExtractor.name:

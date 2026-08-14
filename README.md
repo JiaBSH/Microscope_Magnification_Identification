@@ -65,6 +65,41 @@ rate-identification evaluate data/images --csv artifacts/eval_predictions.csv --
 - 预测连续尺度与真实倍率的相关性
 - 文本混淆矩阵
 
+## 旋转数据固定划分混淆矩阵实验
+
+`rotation_confusion` 使用固定的 Train / Validation / Test 划分，对下列方法做可比评估：
+
+- 原始灰度像素 + PCA；
+- 手工鲁棒特征 + PCA；
+- 冻结 DINOv2，不使用 PCA；
+- 冻结 DINOv2 + PCA。
+
+运行完整实验：
+
+```bash
+mkdir -p /data/home/scvi576/run/JiaBSH/mmdetection_para/outputs/dino_window_supplement/01_scale_ablation/logs
+sbatch scripts/run_rotation_confusion_matrix.sh
+```
+
+实验只使用 `images/train` 的60张图拟合 PCA、KMeans、kNN 和倍率类别尺度中位数。Validation和Test特征只用于预测，不进入拟合。DINOv2使用公开预训练权重并保持冻结，不进行微调。
+
+主实验使用PCA32。原因是Train只有60个独立源图像；在不把相关视图错误地当作独立样本的前提下，PCA64的后部主成分估计不稳定。多视图特征在每张图内部平均，因此统计单位仍是源图像。
+
+每种方法、每个split输出：
+
+```text
+predictions.csv
+metrics.json
+confusion_counts.csv
+confusion_normalized.csv
+window_confusion_counts.csv
+window_confusion_normalized.csv
+confusion_matrix.{png,svg}
+window_confusion_matrix.{png,svg}
+```
+
+五倍率混淆矩阵评价倍率识别；窗口类别混淆矩阵将50×和100×统一映射到`noSW`，评价识别误差是否真正改变下游窗口策略。
+
 ## 说明
 
 - 若未安装 `torch` / `timm`，系统会继续使用默认的手工鲁棒特征提取器。
