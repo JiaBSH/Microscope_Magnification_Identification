@@ -10,8 +10,14 @@
 
 set -euo pipefail
 
-module purge 2>/dev/null || true
-module load cuda/13.0
+# Some Slurm compute nodes do not initialize Environment Modules for batch
+# shells. The conda environment already ships the CUDA runtime required by
+# PyTorch, so loading the cluster module is optional rather than a hard
+# requirement.
+if command -v module >/dev/null 2>&1; then
+  module purge 2>/dev/null || true
+  module load cuda/13.0
+fi
 
 CONDA_BASE="${CONDA_BASE:-/data/apps/miniforge/25.3.0-3}"
 CONDA_ENV_NAME="${CONDA_ENV_NAME:-mmdetection_para}"
