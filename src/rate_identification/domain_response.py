@@ -611,7 +611,12 @@ def plot_representative_panels(
             (input_size, input_size), Image.Resampling.BICUBIC
         )
         dense_scores = np.asarray(score_image, dtype=np.float32)
-        figure, axes = plt.subplots(1, 4, figsize=(15.5, 4.1))
+        figure, axes = plt.subplots(
+            1,
+            4,
+            figsize=(15.5, 4.1),
+            constrained_layout=True,
+        )
         axes[0].imshow(image)
         axes[0].set_title("Aligned image")
         axes[1].imshow(mask, cmap="YlOrBr", vmin=0, vmax=1)
@@ -626,7 +631,6 @@ def plot_representative_panels(
             axis.axis("off")
         figure.colorbar(heat, ax=axes[2:], fraction=0.025, pad=0.02, label="Prototype response")
         figure.suptitle(f"{label} — {record.file_name}")
-        figure.tight_layout()
         stem = output_dir / f"representative_{label.replace('.', 'p')}"
         figure.savefig(stem.with_suffix(".png"), dpi=260, bbox_inches="tight")
         figure.savefig(stem.with_suffix(".svg"), bbox_inches="tight")
@@ -695,7 +699,7 @@ def plot_response_distribution(
     figure, axis = plt.subplots(figsize=(5.2, 4.8))
     boxes = axis.boxplot(
         [flat_scores[~truth], flat_scores[truth]],
-        labels=["Background", "Domain"],
+        tick_labels=["Background", "Domain"],
         showfliers=False,
         patch_artist=True,
     )
@@ -736,6 +740,8 @@ def run_experiment(args: argparse.Namespace) -> None:
         )
         for split in ("train", "val", "test")
     }
+    if extractor.embedding_dim is None:
+        extractor.embedding_dim = int(split_data["train"].tokens.shape[-1])
 
     domain, background = fit_weighted_prototypes(
         split_data["train"].tokens,
