@@ -100,6 +100,24 @@ window_confusion_matrix.{png,svg}
 
 五倍率混淆矩阵评价倍率识别；窗口类别混淆矩阵将50×和100×统一映射到`noSW`，评价识别误差是否真正改变下游窗口策略。
 
+## DINOv2 畴区响应与像素占比实验
+
+`rate_identification.domain_response` 从冻结的 DINOv2-S/14 提取
+`37×37×384` patch token，并与 `coco_rotation` 的 COCO polygon union mask
+按相同几何变换对齐。训练集用于拟合畴区/背景原型，验证集用于选择响应阈值，
+测试集用于报告 patch AUROC、Dice、IoU、畴区内外响应以及响应面积与真实畴区
+像素占比的 Pearson、Spearman 和控制倍率后的相关系数。
+
+```bash
+sbatch scripts/run_dino_domain_response.sh
+```
+
+默认结果写入：
+
+```text
+/data/home/scvi576/run/JiaBSH/mmdetection_para/outputs/dino_window_supplement/02_domain_response
+```
+
 ## 说明
 
 - 若未安装 `torch` / `timm`，系统会继续使用默认的手工鲁棒特征提取器。
